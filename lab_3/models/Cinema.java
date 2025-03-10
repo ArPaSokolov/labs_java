@@ -13,23 +13,6 @@ public class Cinema {
         this.name = name;
         this.halls = new ArrayList<>();
     }
-    
-    // Создание зала
-    public void addHall(Scanner scanner) {
-        System.out.print("Введите название зала: ");
-        String hallName = scanner.nextLine(); 
-
-        // Создание зала и добавление названия в список
-        Hall hall = new Hall(hallName);
-        halls.add(hall);
-
-        System.out.println("Зал \"" + hallName + "\" успешно добавлен!");
-    }
-
-    // Чтение зала
-    public void loadHall(Hall hall) {
-        halls.add(hall);
-    }
 
     // Вывод информации о кинотеатрах
     public void showInfo() {
@@ -65,6 +48,10 @@ public class Cinema {
     // Получение всех залов
     public List<Hall> getHalls() {
         return halls;
+    }
+
+    public void addHall(Hall hall) {
+        halls.add(hall);
     }
     
     public String getName() {

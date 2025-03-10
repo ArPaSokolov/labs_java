@@ -75,7 +75,7 @@ public class FileManager {
     }
 
     // Добавление нового фильма
-    public static void addMovie(List<Movie> movies, Scanner scanner) {
+    public static void createMovie(List<Movie> movies, Scanner scanner) {
         System.out.println("\nДобавление нового фильма");
         System.out.println("Введите название фильма: ");
         String title = scanner.nextLine();
@@ -144,7 +144,7 @@ public class FileManager {
                     currentCinema = new Cinema(cinemaName);
                     isCurrentCinema = true;
                 } else if (isCurrentCinema && !line.isBlank()) {
-                    currentCinema.loadHall(new Hall(line)); // Добавляем зал
+                    currentCinema.addHall(new Hall(line)); // Добавляем зал
                 }
             }
             if (currentCinema != null) {
@@ -158,7 +158,7 @@ public class FileManager {
     }
 
     // Создание кинотеатра
-    public static void addCinema(Scanner scanner) {
+    public static void createCinema(Scanner scanner) {
         System.out.println("Введите название кинотеатра: ");
         String cinemaName = scanner.nextLine();
 
@@ -210,6 +210,79 @@ public class FileManager {
         }
     }
 
+    // Поиск кинотеатра по названию
+    public static int findCinemaLineNumber(Cinema cinema) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(CINEMAS_FILE))) {
+            String line;
+            int lineNumber = 0;
+
+            while ((line = reader.readLine()) != null) {
+                lineNumber++;
+
+                if (line.startsWith("Кинотеатр: ")) {
+                    String currentCinemaName = line.substring(11).trim(); // Извлекаем название
+                    if (currentCinemaName.equalsIgnoreCase(cinema.getName())) {
+                        return lineNumber; // Возвращаем номер строки, если нашли кинотеатр
+                    }
+                }
+            }
+            return -1;
+
+        } catch (IOException e) {
+            System.out.println("Ошибка при чтении файла: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    // Поиск зала по названию
+    public static int findHallLineNumber(Cinema cinema, Hall hall) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(CINEMAS_FILE))) {
+            String line;
+            int lineNumber = 0;
+            boolean search = true;
+
+            while ((line = reader.readLine()) != null) {
+                lineNumber++;
+                if (line.startsWith("Кинотеатр: ") && search) {
+                    return -1;
+                }
+                else if (line.startsWith("Кинотеатр: ")) {
+                    String currentCinemaName = line.substring(11).trim();
+                    if (currentCinemaName.equalsIgnoreCase(cinema.getName())) {
+                        search = true; // если нашли кинотеатр
+                    }
+                }
+                else if (line.equalsIgnoreCase(hall.getName())) {
+                    return lineNumber;
+                }
+            }
+
+            return -1;
+        } catch (IOException e) {
+            System.out.println("Ошибка при чтении файла: " + e.getMessage());
+            return -1;
+        }
+    }
+
+    // Создание зала
+    public static void createHall(Cinema cinema, Scanner scanner) {
+        System.out.print("Введите название зала: ");
+        String hallName = scanner.nextLine(); 
+
+        // Создание зала и добавление названия в список
+        Hall hall = new Hall(hallName);
+        cinema.addHall(hall);
+
+        if (findHallLineNumber(cinema, hall) > 0) {
+            System.out.println("Зал \"" + hallName + "\" уже существует!");
+        } else {
+            File cinemasFile = new File(CINEMAS_FILE);
+            insertLine2File(cinemasFile, hallName, findCinemaLineNumber(cinema) + 1);
+
+            System.out.println("Зал \"" + hallName + "\" успешно добавлен!");
+        }
+    }
+
     // Сохранить схему зала в файл
     public static void addSeats(Cinema cinema, Hall hall, Scanner scanner) {
         String fileName = SHEMAS_PATH + cinema.getName() + "_" + hall.getName() + ".txt";
@@ -244,7 +317,7 @@ public class FileManager {
     }
 
     // Чтение схемы зала из файла
-    public static void loadSeats(Cinema cinema, Hall hall) {
+    public static int loadSeats(Cinema cinema, Hall hall) {
         String fileName = SHEMAS_PATH + cinema.getName() + "_" + hall.getName() + ".txt";
 
         try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
@@ -264,10 +337,10 @@ public class FileManager {
                 }
             }
             hall.setSeats(seatRows.toArray(new Seat[0][]));
-
-            System.out.println("Схема зала загружена!");
+            return 1;
         } catch (IOException e) {
             System.out.println("Ошибка при чтении файла: " + e.getMessage());
+            return 0;
         }
     }
 }
