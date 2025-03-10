@@ -5,7 +5,55 @@ import java.util.*;
 
 public class FileManager {
     private static final String MOVIES_FILE = "lab_3\\movies.txt";
-    private static final String SESSIONS_FILE = "lab_3\\";
+    private static final String CINEMAS_FILE = "C:\\Programming\\Github\\labs_java\\lab_3\\cinemas";
+    private static final String SESSIONS_PATH = "lab_3\\";
+
+    // Вставка данных в любую часть файла
+    public static void insertLine2File(File filePath, String newLine, int insertPosition) {
+        File tempFile = new File("temp.txt");
+
+        try (
+            BufferedReader reader = new BufferedReader(new FileReader(filePath));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(tempFile))
+        ) {
+            String line;
+            int lineNumber = 0;
+            boolean inserted = false;
+
+            while ((line = reader.readLine()) != null) {
+                // Вставляем строку на нужную позицию
+                if (lineNumber == insertPosition) {
+                    writer.write(newLine);
+                    writer.newLine();
+                    inserted = true;
+                }
+                writer.write(line);
+                writer.newLine();
+                lineNumber++;
+            }
+
+            // Если insertPosition больше числа строк — дописываем в конец
+            if (!inserted) {
+                writer.write(newLine);
+                writer.newLine();
+            }
+
+        } catch (IOException e) {
+            System.out.println("Ошибка при обработке файла: " + e.getMessage());
+            return;
+        }
+
+        // Заменяем оригинальный файл временным
+        if (!filePath.delete()) {
+            System.out.println("Ошибка: не удалось удалить оригинальный файл.");
+            return;
+        }
+        if (!tempFile.renameTo(filePath)) {
+            System.out.println("Ошибка: не удалось переименовать временный файл.");
+        } else {
+            System.out.println("Запись вставлена в файл!");
+        }
+    }
 
     // Чтение списка фильмов из файла
     public static List<Movie> loadMovies() {
@@ -25,6 +73,21 @@ public class FileManager {
         return movies;
     }
 
+    // Добавление нового фильма
+    public static void addMovie(List<Movie> movies, Scanner scanner) {
+        System.out.println("\nДобавление нового фильма");
+        System.out.println("Введите название фильма: ");
+        String title = scanner.nextLine();
+        System.out.println("Введите длительность фильма (чч:мм): ");
+        String length = scanner.nextLine();
+
+        movies.add(new Movie(title, length));
+
+        // Вставка фильма в конец списка
+        File moviesFile = new File(MOVIES_FILE);
+        insertLine2File(moviesFile, title + ";" + length, Integer.MAX_VALUE);
+    }
+
     // Обновление списка фильмов (перезаписываем файл)
     public static boolean updateMoviesList(List<Movie> movies) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(MOVIES_FILE))) {
@@ -36,21 +99,6 @@ public class FileManager {
         } catch (IOException e) {
             System.out.println("Ошибка сохранения: " + e.getMessage());
             return false;
-        }
-    }
-
-    // Добавление нового фильма
-    public static void addMovie(List<Movie> movies, Scanner scanner) {
-        System.out.println("\nДобавление нового фильма");
-        System.out.println("Введите название фильма: ");
-        String title = scanner.nextLine();
-        System.out.println("Введите длительность фильма (чч:мм): ");
-        String length = scanner.nextLine();
-        try (PrintWriter writer = new PrintWriter(new FileWriter(MOVIES_FILE))) {
-            movies.add(new Movie(title, length));
-            updateMoviesList(movies);            
-        } catch (IOException e) {
-            System.out.println("Ошибка сохранения: " + e.getMessage());
         }
     }
 
@@ -77,10 +125,27 @@ public class FileManager {
             System.out.println("Некорректный номер!");
         }
     }
+ 
+    // Создание кинотеатра
+    public static void addCinema(Scanner scanner) {
+        System.out.println("Введите название кинотеатра: ");
+        String cinemaName = scanner.nextLine();
+
+        // Создаем файлик с сеансами в кинотеатре
+        try (PrintWriter writer = new PrintWriter(new FileWriter(SESSIONS_PATH + cinemaName + ".txt"))) {
+        } catch (IOException e) {
+            System.out.println("Ошибка сохранения кинотеатра: " + e.getMessage());
+        }
+
+        // Добавим кинотеатр в список кинотеатров
+        File cinemasFile = new File(CINEMAS_FILE);
+        insertLine2File(cinemasFile, "\n" + cinemaName, Integer.MAX_VALUE); // вставляем в конец списка
+        // нужно что-то сделать с созданием объекта кинотеатра
+    }
 
     // Загрузка фильмов из списка по дате (один фильм записывается один раз)
     public static HashSet<String> loadSessionsByDate(String cinemaName, String date) {
-        File file = new File(SESSIONS_FILE + cinemaName + ".txt");
+        File file = new File(SESSIONS_PATH + cinemaName + ".txt");
         if (!file.exists()){
             System.out.println("Такого кинотеатра нет :(");
             return null;
