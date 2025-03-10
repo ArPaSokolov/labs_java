@@ -170,8 +170,7 @@ public class FileManager {
 
         // Добавим кинотеатр в список кинотеатров
         File cinemasFile = new File(CINEMAS_FILE);
-        insertLine2File(cinemasFile, "\nКинотеатр:" + cinemaName, Integer.MAX_VALUE); // вставляем в конец списка
-        // нужно что-то сделать с созданием объекта кинотеатра
+        insertLine2File(cinemasFile, "\nКинотеатр: " + cinemaName, Integer.MAX_VALUE); // вставляем в конец списка
     }
 
     // Загрузка фильмов из списка по дате (один фильм записывается один раз)
@@ -278,6 +277,7 @@ public class FileManager {
         } else {
             File cinemasFile = new File(CINEMAS_FILE);
             insertLine2File(cinemasFile, hallName, findCinemaLineNumber(cinema) + 1);
+            cinema.addHall(hall);
 
             System.out.println("Зал \"" + hallName + "\" успешно добавлен!");
         }
