@@ -26,6 +26,11 @@ public class Cinema {
         System.out.println("Зал \"" + hallName + "\" успешно добавлен!");
     }
 
+    // Чтение зала
+    public void loadHall(Hall hall) {
+        halls.add(hall);
+    }
+
     // Получение зала
     public Hall getHall(Scanner scanner) {
         if (halls.isEmpty()) {
@@ -41,10 +46,23 @@ public class Cinema {
             }
         }
         System.out.println("Зал с именем \"" + hallName + "\" не найден!");
-        return this.getHall(scanner); // Рекурсивный вызов без ошибки
+        return this.getHall(scanner); // Рекурсивный вызов
     }
 
     public String getName() {
         return name;
+    }
+
+    // Вывод информации о кинотеатрах
+    public void showInfo() {
+        System.out.println("Кинотеатр: " + name);
+        if (halls.isEmpty()) {
+            System.out.println(" Нет залов.");
+        } else {
+            System.out.println(" Залы:");
+            for (Hall hall : halls) {
+                System.out.println(" -" + hall.getName());
+            }
+        }
     }
 }

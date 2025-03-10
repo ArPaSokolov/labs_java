@@ -5,7 +5,7 @@ import java.util.*;
 
 public class FileManager {
     private static final String MOVIES_FILE = "lab_3\\movies.txt";
-    private static final String CINEMAS_FILE = "C:\\Programming\\Github\\labs_java\\lab_3\\cinemas";
+    private static final String CINEMAS_FILE = "lab_3\\cinemas";
     private static final String SESSIONS_PATH = "lab_3\\";
 
     // Вставка данных в любую часть файла
@@ -55,7 +55,7 @@ public class FileManager {
         }
     }
 
-    // Чтение списка фильмов из файла
+    // Чтение фильмов из файла
     public static List<Movie> loadMovies() {
         List<Movie> movies = new ArrayList<>();
         try (BufferedReader reader = new BufferedReader(new FileReader(MOVIES_FILE))) {
@@ -126,6 +126,36 @@ public class FileManager {
         }
     }
  
+    // Чтение кинотеатров из файла
+    public static List<Cinema> loadCinemas() {
+        List<Cinema> cinemas = new ArrayList<>();
+        Cinema currentCinema = null;
+        boolean isCurrentCinema = false;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(CINEMAS_FILE))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Кинотеатр: ")) {
+                    if (currentCinema != null) {
+                        cinemas.add(currentCinema);  // Добавляем кинотеатр
+                    }
+                    String cinemaName = line.replace("Кинотеатр: ", "").trim();
+                    currentCinema = new Cinema(cinemaName);
+                    isCurrentCinema = true;
+                } else if (isCurrentCinema && !line.isBlank()) {
+                    currentCinema.loadHall(new Hall(line)); // Добавляем зал
+                }
+            }
+            if (currentCinema != null) {
+                cinemas.add(currentCinema);  // Добавляем последний кинотеатр
+            }
+        } catch (IOException e) {
+            System.out.println("Ошибка при чтении файла: " + e.getMessage());
+        }
+        System.out.println("Кинотеатры загружены из файла!");
+        return cinemas;
+    }
+
     // Создание кинотеатра
     public static void addCinema(Scanner scanner) {
         System.out.println("Введите название кинотеатра: ");
@@ -139,7 +169,7 @@ public class FileManager {
 
         // Добавим кинотеатр в список кинотеатров
         File cinemasFile = new File(CINEMAS_FILE);
-        insertLine2File(cinemasFile, "\n" + cinemaName, Integer.MAX_VALUE); // вставляем в конец списка
+        insertLine2File(cinemasFile, "\nКинотеатр:" + cinemaName, Integer.MAX_VALUE); // вставляем в конец списка
         // нужно что-то сделать с созданием объекта кинотеатра
     }
 
@@ -162,7 +192,7 @@ public class FileManager {
                 else if (line.matches("\\d{4}-\\d{2}-\\d{2}") && dateMatches) { // считали следующую дату
                         return films;
                 }
-                else if (!line.matches("") && !line.contains("Зал")) { // не дата, не пустая строка и не зал => это фильм
+                else if (!line.isBlank() && !line.contains("Зал")) { // не дата, не пустая строка и не зал => это фильм
                         String[] parts = line.split(" ");
                         films.add(parts[0]);
                 }
