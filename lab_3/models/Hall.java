@@ -1,6 +1,6 @@
 package models;
 
-import java.util.Scanner;
+import java.util.*;
 
 public class Hall {
     private String name;
@@ -9,29 +9,14 @@ public class Hall {
     // Конструктор
     public Hall(String name) {
         this.name = name;
+        this.seats = new Seat[0][0];
     }
 
-    // Создание мест в зале
-    public void addSeats(Scanner scanner) {
-        System.out.print("Введите количество рядов: ");
-        int rows = scanner.nextInt();
-        seats = new Seat[rows][];  // Создаём массив рядов
-
-        for (int i = 0; i < rows; i++) {
-            System.out.print("Введите количество мест в ряду " + (i + 1) + ": ");
-            int cols = scanner.nextInt();
-            seats[i] = new Seat[cols];  // Создаём массив мест в ряду
-
-            for (int j = 0; j < cols; j++) {
-                seats[i][j] = new Seat(String.valueOf(j + 1));  // Заполняем массив местами
-            }
-        }
-    }
-
-    // Отображение плпнп зала
+    // Отображение плана зала
     public void showSeats() {
         if (seats == null || seats.length == 0 || seats[0] == null || seats[0].length == 0) {
             System.out.println("Ошибка: в зале не добавлено мест!");
+            return;
         }
 
         System.out.println("План зала \"" + name + "\":");
@@ -60,6 +45,14 @@ public class Hall {
         } else {
             System.out.println("Ошибка: место уже занято!");
         }
+    }
+
+    public Seat[][] getSeats() {
+        return seats;
+    }
+    
+    public void setSeats(Seat[][] seats) {
+        this.seats = seats;
     }
 
     public String getName() {

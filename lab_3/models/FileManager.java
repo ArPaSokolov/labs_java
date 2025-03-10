@@ -5,8 +5,9 @@ import java.util.*;
 
 public class FileManager {
     private static final String MOVIES_FILE = "lab_3\\movies.txt";
-    private static final String CINEMAS_FILE = "lab_3\\cinemas";
+    private static final String CINEMAS_FILE = "lab_3\\cinemas.txt";
     private static final String SESSIONS_PATH = "lab_3\\";
+    private static final String SHEMAS_PATH = "lab_3\\";
 
     // Вставка данных в любую часть файла
     public static void insertLine2File(File filePath, String newLine, int insertPosition) {
@@ -206,6 +207,67 @@ public class FileManager {
         } catch (IOException e) {
             System.out.println("Ошибка загрузки кинотеатра: " + e.getMessage());
             return null;
+        }
+    }
+
+    // Сохранить схему зала в файл
+    public static void addSeats(Cinema cinema, Hall hall, Scanner scanner) {
+        String fileName = SHEMAS_PATH + cinema.getName() + "_" + hall.getName() + ".txt";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
+            writer.write("План зала \"" + hall.getName() + "\":");
+            writer.newLine();
+
+            System.out.print("Введите количество рядов: ");
+            int rows = scanner.nextInt();
+            hall.setSeats(new Seat[rows][]); 
+
+            // Заполнение мест
+            for (int i = 0; i < rows; i++) {
+                System.out.print("Введите количество мест в ряду " + (i + 1) + ": ");
+                int cols = scanner.nextInt();
+                hall.getSeats()[i] = new Seat[cols];
+
+                writer.write("Ряд " + (i + 1) + " ");
+
+                for (int j = 0; j < cols; j++) {
+                    hall.getSeats()[i][j] = new Seat(String.valueOf(j + 1));
+                    String formattedSeat = String.format("|%-2d|", j + 1);
+                    writer.write(formattedSeat);
+                }
+                writer.newLine();
+            }
+            System.out.println("Схема зала сохранена в файл: " + fileName);
+        } catch (IOException e) {
+            System.out.println("Ошибка при сохранении схемы в файл: " + e.getMessage());
+        }
+    }
+
+    // Чтение схемы зала из файла
+    public static void loadSeats(Cinema cinema, Hall hall) {
+        String fileName = SHEMAS_PATH + cinema.getName() + "_" + hall.getName() + ".txt";
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            List<Seat[]> seatRows = new ArrayList<>(); // Временный список для хранения рядов
+
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Ряд")) {
+                    String[] parts = line.split("\\|");
+                    int numberOfSeats = parts.length/2;
+
+                    Seat[] rowSeats = new Seat[numberOfSeats];
+                    for (int colIndex = 0; colIndex < numberOfSeats; colIndex++) {
+                        rowSeats[colIndex] = new Seat(String.valueOf(colIndex + 1));
+                    }
+                    seatRows.add(rowSeats);
+                }
+            }
+            hall.setSeats(seatRows.toArray(new Seat[0][]));
+
+            System.out.println("Схема зала загружена!");
+        } catch (IOException e) {
+            System.out.println("Ошибка при чтении файла: " + e.getMessage());
         }
     }
 }

@@ -31,6 +31,19 @@ public class Cinema {
         halls.add(hall);
     }
 
+    // Вывод информации о кинотеатрах
+    public void showInfo() {
+        System.out.println("Кинотеатр: " + name);
+        if (halls.isEmpty()) {
+            System.out.println(" Нет залов.");
+        } else {
+            System.out.println(" Залы:");
+            for (Hall hall : halls) {
+                System.out.println(" -" + hall.getName());
+            }
+        }
+    }
+
     // Получение зала
     public Hall getHall(Scanner scanner) {
         if (halls.isEmpty()) {
@@ -49,20 +62,12 @@ public class Cinema {
         return this.getHall(scanner); // Рекурсивный вызов
     }
 
+    // Получение всех залов
+    public List<Hall> getHalls() {
+        return halls;
+    }
+    
     public String getName() {
         return name;
-    }
-
-    // Вывод информации о кинотеатрах
-    public void showInfo() {
-        System.out.println("Кинотеатр: " + name);
-        if (halls.isEmpty()) {
-            System.out.println(" Нет залов.");
-        } else {
-            System.out.println(" Залы:");
-            for (Hall hall : halls) {
-                System.out.println(" -" + hall.getName());
-            }
-        }
     }
 }
