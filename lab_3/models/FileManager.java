@@ -4,7 +4,8 @@ import java.io.*;
 import java.util.*;
 
 public class FileManager {
-    private static final String MOVIES_FILE = "C:\\Programming\\Github\\labs_java\\lab_3\\movies.txt";
+    private static final String MOVIES_FILE = "lab_3\\movies.txt";
+    private static final String SESSIONS_FILE = "lab_3\\";
 
     // Чтение списка фильмов из файла
     public static List<Movie> loadMovies() {
@@ -74,6 +75,42 @@ public class FileManager {
             updateMoviesList(movies);
         } else {
             System.out.println("Некорректный номер!");
+        }
+    }
+
+    // Загрузка фильмов из списка по дате (один фильм записывается один раз)
+    public static HashSet<String> loadSessionsByDate(String cinemaName, String date) {
+        File file = new File(SESSIONS_FILE + cinemaName + ".txt");
+        if (!file.exists()){
+            System.out.println("Такого кинотеатра нет :(");
+            return null;
+        } 
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            boolean dateMatches = false;
+            HashSet<String> films = new HashSet<>();
+
+            while ((line = reader.readLine()) != null) {
+                if (line.equals(date)) { // нашли нужную дату, считываем записи до следующей даты
+                    dateMatches = true;
+                }
+                else if (line.matches("\\d{4}-\\d{2}-\\d{2}") && dateMatches) { // считали следующую дату
+                        return films;
+                }
+                else if (!line.matches("") && !line.contains("Зал")) { // не дата, не пустая строка и не зал => это фильм
+                        String[] parts = line.split(" ");
+                        films.add(parts[0]);
+                }
+            }
+            if (!dateMatches){
+                System.out.println("В эту дату в кинотетре " + cinemaName + " сеансов нет :(");
+                return null;
+            } else {
+                return films;
+            }
+        } catch (IOException e) {
+            System.out.println("Ошибка загрузки кинотеатра: " + e.getMessage());
+            return null;
         }
     }
 }
