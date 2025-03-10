@@ -2,7 +2,6 @@ package models;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 
 public class Cinema {
     private String name;
@@ -28,21 +27,14 @@ public class Cinema {
     }
 
     // Получение зала
-    public Hall getHall(Scanner scanner) {
-        if (halls.isEmpty()) {
-            System.out.println("Нет доступных залов в кинотеатре.");
-            return null;
-        }
-        System.out.print("Введите название зала: ");
-        String hallName = scanner.nextLine();
-    
+    public Hall getHallByName(String hallName) {
         for (Hall hall : halls) {
             if (hall.getName().equalsIgnoreCase(hallName)) {
                 return hall;
             }
         }
         System.out.println("Зал с именем \"" + hallName + "\" не найден!");
-        return this.getHall(scanner); // Рекурсивный вызов
+        return null;
     }
 
     // Получение всех залов

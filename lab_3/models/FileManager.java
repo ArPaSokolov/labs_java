@@ -1,13 +1,14 @@
 package models;
 
 import java.io.*;
+import java.time.LocalTime;
 import java.util.*;
 
 public class FileManager {
-    private static final String MOVIES_FILE = "lab_3\\movies.txt";
-    private static final String CINEMAS_FILE = "lab_3\\cinemas.txt";
-    private static final String SESSIONS_PATH = "lab_3\\";
-    private static final String SHEMAS_PATH = "lab_3\\";
+    private static final String MOVIES_FILE = "lab_3\\moviesList.txt";
+    private static final String CINEMAS_FILE = "lab_3\\cinemas\\cinemasList.txt";
+    private static final String SESSIONS_PATH = "lab_3\\cinemas\\";
+    private static final String SHEMAS_PATH = "lab_3\\shemas\\";
 
     // Вставка данных в любую часть файла
     public static void insertLine2File(File filePath, String newLine, int insertPosition) {
@@ -79,7 +80,7 @@ public class FileManager {
         System.out.println("\nДобавление нового фильма");
         System.out.println("Введите название фильма: ");
         String title = scanner.nextLine();
-        System.out.println("Введите длительность фильма (чч:мм): ");
+        System.out.println("Введите длительность фильма в минутах: ");
         String length = scanner.nextLine();
 
         movies.add(new Movie(title, length));
@@ -171,42 +172,6 @@ public class FileManager {
         // Добавим кинотеатр в список кинотеатров
         File cinemasFile = new File(CINEMAS_FILE);
         insertLine2File(cinemasFile, "\nКинотеатр: " + cinemaName, Integer.MAX_VALUE); // вставляем в конец списка
-    }
-
-    // Загрузка фильмов из списка по дате (один фильм записывается один раз)
-    public static HashSet<String> loadSessionsByDate(String cinemaName, String date) {
-        File file = new File(SESSIONS_PATH + cinemaName + ".txt");
-        if (!file.exists()){
-            System.out.println("Такого кинотеатра нет :(");
-            return null;
-        } 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            boolean dateMatches = false;
-            HashSet<String> films = new HashSet<>();
-
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(date)) { // нашли нужную дату, считываем записи до следующей даты
-                    dateMatches = true;
-                }
-                else if (line.matches("\\d{4}-\\d{2}-\\d{2}") && dateMatches) { // считали следующую дату
-                        return films;
-                }
-                else if (!line.isBlank() && !line.contains("Зал")) { // не дата, не пустая строка и не зал => это фильм
-                        String[] parts = line.split(" ");
-                        films.add(parts[0]);
-                }
-            }
-            if (!dateMatches){
-                System.out.println("В эту дату в кинотетре " + cinemaName + " сеансов нет :(");
-                return null;
-            } else {
-                return films;
-            }
-        } catch (IOException e) {
-            System.out.println("Ошибка загрузки кинотеатра: " + e.getMessage());
-            return null;
-        }
     }
 
     // Поиск кинотеатра по названию
@@ -341,6 +306,80 @@ public class FileManager {
         } catch (IOException e) {
             System.out.println("Ошибка при чтении файла: " + e.getMessage());
             return 0;
+        }
+    }
+
+    // Загрузка фильмов из списка по дате (один фильм записывается один раз)
+    public static HashSet<String> findMoviesByDate(String cinemaName, String date) {
+        File file = new File(SESSIONS_PATH + cinemaName + ".txt");
+        if (!file.exists()){
+            System.out.println("Такого кинотеатра нет :(");
+            return null;
+        } 
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            boolean dateMatches = false;
+            HashSet<String> movie = new HashSet<>();
+
+            while ((line = reader.readLine()) != null) {
+                if (line.equals(date)) { // нашли нужную дату, считываем записи до следующей даты
+                    dateMatches = true;
+                }
+                else if (line.matches("\\d{4}-\\d{2}-\\d{2}") && dateMatches) { // считали следующую дату
+                        return movie;
+                }
+                else if (!line.isBlank() && !line.contains("Зал")) { // не дата, не пустая строка и не зал => это фильм
+                        String[] parts = line.split(" ");
+                        movie.add(parts[0]);
+                }
+            }
+            if (!dateMatches){
+                System.out.println("В эту дату в кинотетре " + cinemaName + " сеансов нет :(");
+                return null;
+            } else {
+                return movie;
+            }
+        } catch (IOException e) {
+            System.out.println("Ошибка загрузки кинотеатра: " + e.getMessage());
+            return null;
+        }
+    }
+
+    // Чтение сеансов
+    public static void loadSessions(Cinema cinema) {
+        String fileName = SESSIONS_PATH + cinema.getName() + ".txt";
+        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            String date = null;
+            Hall currentHall = null;
+
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+
+                // Если строка - это дата
+                if (line.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                    date = line;
+                }
+                // Если строка - это название зала
+                else if (line.contains("Зал")) {
+                    String[] parts = line.split(" ");
+                    currentHall = cinema.getHallByName(parts[1]);
+                }
+                // Если строка - это сеанс
+                else if (!line.isEmpty()) {
+                    String[] parts = line.split("\\|");
+                    if (parts.length < 3) continue;
+
+                    String movieTitle = parts[0];
+                    LocalTime startTime = LocalTime.parse(parts[1]);
+                    LocalTime endTime = LocalTime.parse(parts[2]);
+
+                    Session session = new Session(movieTitle, startTime, endTime, currentHall, date);
+                    currentHall.addSession(session);
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Ошибка при загрузке сеансов: " + e.getMessage());
         }
     }
 }
