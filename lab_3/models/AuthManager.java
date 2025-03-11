@@ -16,6 +16,7 @@ public class AuthManager {
         users.put("yssslay", "67890");
     }
 
+    // Вход
     public static String login() {
         Scanner scanner = new Scanner(System.in);
         String username;
@@ -27,7 +28,7 @@ public class AuthManager {
             System.out.print("Введите пароль: ");
             String password = scanner.nextLine();
 
-            // Проверяем пользователя
+            // Проверяем пользователя в БД
             if (users.containsKey(username) && users.get(username).equals(password)) {
                 return username;
             } else {

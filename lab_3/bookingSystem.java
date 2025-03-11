@@ -4,9 +4,10 @@ import java.util.*;
 import models.*;
 
 public class bookingSystem {
-    // Администратор
+    // Режим администратора
     public static void Admin(List<Cinema> cinemas, List<Movie> movies, Scanner scanner) {
         while (true) { 
+            // Меню выбора действия
             System.out.println("Меню:");
             System.out.println("1. Добавить кинотеатр");
             System.out.println("2. Добавить зал");
@@ -21,8 +22,8 @@ public class bookingSystem {
 
             switch (input) {
                 case 1: // Добавить кинотеатр
-                    FileManager.createCinema(scanner);
-                    cinemas = FileManager.loadCinemas();
+                    Cinema newCinema = FileManager.createCinema(scanner);
+                    cinemas.add(newCinema);
                     break;
 
                 case 2: // Добавить зал
@@ -36,38 +37,36 @@ public class bookingSystem {
                 case 3: //  Добавить схему зала
                     selectedCinema = chooseCinema(cinemas, scanner);
                     selectedHall = chooseHall(selectedCinema, scanner);
-                    FileManager.addSeats(selectedCinema, selectedHall, scanner);
+                    FileManager.createSeats(selectedCinema, selectedHall, scanner);
                     break;
 
                 case 4: // Добавить сеанс
-                    // Получаем зал
+
+                    // Получаем файл вставки
                     selectedCinema = chooseCinema(cinemas, scanner);
                     selectedHall = chooseHall(selectedCinema, scanner);
 
-                    // Получаем фильм 
+                    // Получаем данные для сеанса
                     Movie selectedMovie = chooseMovie(movies, scanner);
 
-                    // Получаем время начала сеанса
                     System.out.print("Введите дату (в формате YYYY-MM-DD): ");
                     String date = scanner.nextLine();
 
-                    // Получаем время начала сеанса
                     System.out.print("Введите время начала сеанса (в формате HH:mm): ");
                     String startTimeStr = scanner.nextLine();
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
                     LocalTime startTime = LocalTime.parse(startTimeStr, formatter);
 
-                    // Рассчитываем время окончания
                     String movieLength = selectedMovie.getLength(); 
-                    LocalTime endTime = startTime.plusMinutes(Integer.parseInt(movieLength));
+                    LocalTime endTime = startTime.plusMinutes(Integer.parseInt(movieLength)); // рассчитываем время окончания
 
-                    // Получаем сеанс
+                    // Создаем сеанс
                     Session newSession = new Session(selectedCinema, selectedHall, date, selectedMovie.getMovieTitle(), startTime, endTime);
 
                     // Добавляем сеанс
                     int insertPosition = FileManager.findSessionInsertPosition(selectedCinema, newSession);
                     
-                    FileManager.createSession(newSession, selectedCinema.getName(), selectedHall, date, selectedMovie.getMovieTitle(), startTime, endTime, insertPosition);
+                    FileManager.createSession(newSession, insertPosition);
 
                     System.out.println("Сеанс добавлен! \nФильм: " + selectedMovie.getMovieTitle() + "\nЗал: " + selectedHall.getName() + "\nДата: " + date + "\nВремя: " + startTime + " - " + endTime);
                     System.out.println();
@@ -88,7 +87,7 @@ public class bookingSystem {
         }
     }
 
-    // Обычный пользователь
+    // Режим обычного пользователя
     public static void User(List<Cinema> cinemas, List<Movie> movies, Scanner scanner) {
         while (true) { 
             Session selectedSession = null;
@@ -105,7 +104,7 @@ public class bookingSystem {
                     if (selectedMovie == null) {
                         break;
                     }
-                    selectedSession = chooseSessionByMovie(cinemas, selectedMovie, scanner);
+                    selectedSession = chooseSessionByMovie(cinemas, selectedMovie.getMovieTitle(), scanner);
                     if (selectedSession == null) {
                         break;
                     }
@@ -158,12 +157,14 @@ public class bookingSystem {
 
     // Выбор даты
     public static String chooseDate(TreeSet<String> dates, Scanner scanner) {
+        // Проверка на наличие сеансов пасписании
         if (dates.isEmpty()) {
             System.out.println("Нет сеансов в ближайшее время!");
             return null;
         }
 
-        System.out.println("Дату из списка:");
+        // Меню выбора даты
+        System.out.println("Выберите дату из списка:");
         List<String> datesList = new ArrayList<>(dates); // преобразование в список
         int index = 0;
         for (String date : datesList) {
@@ -206,28 +207,32 @@ public class bookingSystem {
     }
 
     // Выбор сеанса по фильму
-    public static Session chooseSessionByMovie(List<Cinema> cinemas, Movie currentMovie, Scanner scanner) {
+    public static Session chooseSessionByMovie(List<Cinema> cinemas, String currentMovieTitle, Scanner scanner) {
+        
+        // Получение подходящих сеансов
         List<Session> selectedSessions = new ArrayList<>();
 
         for (Cinema cinema : cinemas) { // идем по всем кинотеатрам
             List<Hall> halls = cinema.getHalls();
             for (Hall hall : halls) { // идем по всем залам
-                List<Session> selectedSessionsInHall = hall.getSessionsByMovie(currentMovie.getMovieTitle());
-                for (Session session : selectedSessionsInHall) {
+                List<Session> selectedSessionsInHall = hall.getSessionsByMovie(currentMovieTitle);
+                for (Session session : selectedSessionsInHall) { // идем по полученным сеансам из текущего зала
                     selectedSessions.add(session);
                 }
             }
         }
-    
+
+        // Нашлись ли сеансы
         if (selectedSessions.isEmpty()) {
             System.out.println("Нет сеансов с этим фильмом!");
             return null;
         }
 
+        // Меню выбора сеанса из подходящих
         System.out.println("Выберите сеанс из списка:");
         int index = 0;
         for (Session session : selectedSessions) {
-            System.out.println((index + 1) + ". " + session + " (" + session.getDate() + ")");
+            System.out.println((index + 1) + ". " + session + " (" + session.getDate() + ")" + " (" + session.getCinema().getName() + ", Зал " + session.getHall().getName()+ ")");
             index++;
         }
         System.out.println("0. Назад");
@@ -248,6 +253,8 @@ public class bookingSystem {
 
     // Выбор сеанса по дате
     public static Session chooseSessionByDate(List<Cinema> cinemas, String selectedDate, Scanner scanner) {
+
+        // Получение подходящих сеансов
         List<Session> sessionsOnDate = new ArrayList<>();
 
         for (Cinema cinema : cinemas) {
@@ -259,11 +266,12 @@ public class bookingSystem {
                 }
             }
         }
-        for (int i = 0; i < sessionsOnDate.size(); i++) {
-            System.out.println(i + ". " + sessionsOnDate.get(i).getMovieTitle() + " " + sessionsOnDate.get(i).getStartTime() + "-"+ sessionsOnDate.get(i).getEndTime());
-        }
 
-        System.out.print("Выберите номер сеанса: ");
+        // Выбор сеанса из подходящих
+        System.out.println("Выберите номер сеанса: ");
+        for (int i = 0; i < sessionsOnDate.size(); i++) {
+            System.out.println(i + ". " + sessionsOnDate.get(i).getMovieTitle() + " " + sessionsOnDate.get(i).getStartTime() + "-"+ sessionsOnDate.get(i).getEndTime() + " (" + sessionsOnDate.get(i).getCinema().getName() + ", Зал " + sessionsOnDate.get(i).getHall().getName()+ ")");
+        }
         int movieIndex = scanner.nextInt();
         Session selectedSession = sessionsOnDate.get(movieIndex);
         return selectedSession;
@@ -271,11 +279,13 @@ public class bookingSystem {
 
     // Выбор фильма
     public static Movie chooseMovie(List<Movie> movies, Scanner scanner) {
+        // Проверка, есть ли фильмы
         if (movies.isEmpty()) {
             System.out.println("Список фильмов пуст!");
             return null;
         }
 
+        // Меню выбора фильма
         System.out.println("Выберите фильм из списка:");
         int index = 0;
         for (Movie movie : movies) {
@@ -301,11 +311,13 @@ public class bookingSystem {
 
     // Выбор кинотеатра
     public static Cinema chooseCinema(List<Cinema> cinemas, Scanner scanner) {
+        // Добавлены ли кинотеатры
         if (cinemas.isEmpty()) {
             System.out.println("Список кинотеатров пуст!");
             return null;
         }
 
+        // Меню выбоа кинотеатра
         System.out.println("Выберите кинотеатр из списка:");
         int index = 0;
         for (Cinema cinema : cinemas) {
@@ -331,12 +343,14 @@ public class bookingSystem {
     
     // Выбор зала
     public static Hall chooseHall(Cinema cinema, Scanner scanner) {
+        // Добавлены ли залы
         List<Hall> halls = cinema.getHalls();
         if (halls.isEmpty()) {
             System.out.println("Список залов пуст!");
             return null;
         }
 
+        // Меню выбора зала
         System.out.println("Выберите зал из списка:");
         int index = 0;
         for (Hall hall : halls) {
@@ -362,16 +376,16 @@ public class bookingSystem {
 
     // Взаимодействие с фильмами
     public static void filmMenu(List<Movie> movies, Scanner scanner) {
-        int filmSettings = Integer.MAX_VALUE;
-        while (filmSettings != 0) {
+        int menuIndex = Integer.MAX_VALUE;
+        while (menuIndex != 0) {
             System.out.println("Меню фильмов:");
             System.out.println("1. Добавить фильм");
             System.out.println("2. Удалить фильм");
             System.out.println("3. Показать список фильмов");
             System.out.println("0. Назад");
-            filmSettings = scanner.nextInt();
+            menuIndex = scanner.nextInt();
             scanner.nextLine();
-            switch (filmSettings) {
+            switch (menuIndex) {
                 case 1: //  Добавить
                     FileManager.createMovie(movies, scanner);                    
                     break;
@@ -394,7 +408,7 @@ public class bookingSystem {
         }
     }
 
-    // Загрузка уникальных отсортированных дат
+    // Получение уникальных отсортированных дат
     public static TreeSet<String> findSessionDates(List<Cinema> cinemas) {
         TreeSet<String> uniqueDates = new TreeSet<>();
 
@@ -417,7 +431,7 @@ public class bookingSystem {
         System.out.println("Запуск сервиса...");
 
         System.out.println("Загружаем кинотеатри и залы...");
-        List<Cinema> cinemas = FileManager.loadCinemas(); // загружаем кинотеатры из файла
+        List<Cinema> cinemas = FileManager.loadCinemas(); // загружаем кинотеатры и залы из файла cinemasList.txt
 
         System.out.println("Загружаем сеансы и схемы залов..."); 
         int total = 0;
@@ -425,25 +439,27 @@ public class bookingSystem {
         for (Cinema cinema : cinemas) { // идем по всем кинотеатрам
             List<Hall> halls = cinema.getHalls();
             for (Hall hall : halls) { // идем по всем залам
-                loaded += FileManager.loadSeats(cinema, hall); // загружаем схемы
+                loaded += FileManager.loadSeats(cinema, hall); // загружаем схемы из файлов <сinemaName>_<hallName>.txt
                 total ++;
             }
-            FileManager.loadSessions(cinema); // загружаем сеансы
+            FileManager.loadSessions(cinema); // загружаем сеансы (сеансам нужны схемы) <сinemaName>.txt
         }
         if (loaded == total){
-            System.out.println("Схемы залов загружены!");
+            System.out.println("Сеансы и схемы залов загружены успешно!");
         } else {
-            System.out.println("Внимание! Залов найдено " + total + ", схем загружено " + loaded); // скорее всего залов в файле больше, чем файлов со схемами
+            System.out.println("Внимание! Залов найдено " + total + ", схем загружено " + loaded);
         }
 
         System.out.println("Загружаем фильмы...");
-        List<Movie> movies = FileManager.loadMovies(); // загружаем фильмы из файла
+        List<Movie> movies = FileManager.loadMovies(); // загружаем фильмы из файла moviesList.txt
 
-        String userRole = AuthManager.login();
-        if (userRole.equals("admin")) {
+        // Консольное приложение по бронированию билетов
+        String userRole = AuthManager.login(); // вход пользователя
+
+        if (userRole.equals("admin")) { // администрирование сервиса 
             System.out.println("Режим администратора!");
             Admin(cinemas, movies, scanner);
-        } else {
+        } else { // бронирование билетов
             System.out.println("Привет, " + userRole + "!");
             User(cinemas, movies, scanner);
         }

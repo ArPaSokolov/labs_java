@@ -22,20 +22,7 @@ public class Session {
         this.seats = copySeatsFromHall(hall);
     }
 
-    private Seat[][] copySeatsFromHall(Hall hall) {
-        Seat[][] originalSeats = hall.getSeats();
-        Seat[][] sessionSeats = new Seat[originalSeats.length][];
-
-        for (int i = 0; i < originalSeats.length; i++) {
-            sessionSeats[i] = new Seat[originalSeats[i].length];
-            for (int j = 0; j < originalSeats[i].length; j++) {
-                sessionSeats[i][j] = new Seat(originalSeats[i][j].getState());
-            }
-        }
-        return sessionSeats;
-    }
-
-     // Бронирование места на конкретный сеанс
+    // Бронирование места на конкретный сеанс
     public boolean bookSeat(int row, int col) {
         if (row < 0 || row >= seats.length || col < 0 || col >= seats[row].length) {
             System.out.println("Ошибка: такого места нет!");
@@ -68,12 +55,31 @@ public class Session {
         return false;  // Все места забронированы
     }
 
-    public String getMovieTitle() {
-        return movieTitle;
+    public String generateTicket(List<Integer> seat) {
+        return "Фильм: " + movieTitle + "\n" +
+               "Кинотеатр: " + cinema.getName() + "\n" +
+               "Зал: " + hall.getName() + "\n" +
+               "Ряд: " + (seat.get(0) + 1) + "\n" +
+               "Место: " + (seat.get(1) + 1) + "\n" +
+               "Дата: " + date + "\n" +
+               "Время начала: " + startTime + "\n" +
+               "Время окончания: " + endTime;
+    }
+
+    public Hall getHall() {
+        return hall;
     }
 
     public String getDate() {
         return date;
+    }
+
+    public Cinema getCinema() {
+        return cinema;
+    }
+    
+    public String getMovieTitle() {
+        return movieTitle;
     }
 
     public LocalTime getStartTime() {
@@ -84,19 +90,18 @@ public class Session {
         return endTime;
     }
 
-    public Hall getHall() {
-        return hall;
-    }
+    // Получение схемы мест по залу
+    private Seat[][] copySeatsFromHall(Hall hall) {
+        Seat[][] originalSeats = hall.getSeats();
+        Seat[][] sessionSeats = new Seat[originalSeats.length][];
 
-    public String generateTicket(List<Integer> seat) {
-        return "Фильм: " + movieTitle + "\n" +
-               "Кинотеатр: " + cinema.getName() + "\n" +
-               "Зал: " + hall.getName() + "\n" +
-               "Ряд: " + (seat.get(0) + 1) + "\n" +
-               "Место: " + (seat.get(1) + 1) + "\n" +
-               "Дата: " + date + "\n" +
-               "Время начала: " + startTime + "\n" +
-               "Время окончания: " + endTime;
+        for (int i = 0; i < originalSeats.length; i++) {
+            sessionSeats[i] = new Seat[originalSeats[i].length];
+            for (int j = 0; j < originalSeats[i].length; j++) {
+                sessionSeats[i][j] = new Seat(originalSeats[i][j].getState());
+            }
+        }
+        return sessionSeats;
     }
 
     @Override

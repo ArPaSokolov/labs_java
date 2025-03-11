@@ -14,7 +14,7 @@ public class Cinema {
     }
 
     // Вывод информации о кинотеатрах
-    public void showInfo() {
+    public void showHalls() {
         System.out.println("Кинотеатр: " + name);
         if (halls.isEmpty()) {
             System.out.println(" Нет залов.");
@@ -24,6 +24,10 @@ public class Cinema {
                 System.out.println(" -" + hall.getName());
             }
         }
+    }
+
+    public void addHall(Hall hall) {
+        halls.add(hall);
     }
 
     // Получение зала
@@ -40,10 +44,6 @@ public class Cinema {
     // Получение всех залов
     public List<Hall> getHalls() {
         return halls;
-    }
-
-    public void addHall(Hall hall) {
-        halls.add(hall);
     }
     
     public String getName() {

@@ -13,10 +13,6 @@ public class Hall {
         this.seats = new Seat[0][0];
         this.sessions = new ArrayList<>();
     }
-
-    public Seat[][] getSeats() {
-        return seats;
-    }
     
     public void setSeats(Seat[][] seats) {
         this.seats = seats;
@@ -28,6 +24,10 @@ public class Hall {
 
     public void addSession(Session session) {
         this.sessions.add(session);
+    }
+    
+    public Seat[][] getSeats() {
+        return seats;
     }
 
     public List<Session> getSessions() {
