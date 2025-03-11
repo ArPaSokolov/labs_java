@@ -1,3 +1,5 @@
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import models.*;
 
@@ -9,13 +11,13 @@ public class bookingSystem {
             System.out.println("1. Добавить кинотеатр");
             System.out.println("2. Добавить зал");
             System.out.println("3. Добавить схему зала");
-            System.out.println("4. Меню сеансов");
+            System.out.println("4. Добавить сеанс");
             System.out.println("5. Меню фильмов");
             System.out.println("0. Выйти");
             int input = scanner.nextInt();
             scanner.nextLine();
-            Cinema curentCinema = null;
-            Hall curentHall = null;
+            Cinema selectedCinema = null;
+            Hall selectedHall = null;
 
             switch (input) {
                 case 1: // Добавить кинотеатр
@@ -24,21 +26,51 @@ public class bookingSystem {
                     break;
 
                 case 2: // Добавить зал
-                    curentCinema = chooseCinema(cinemas, scanner);
-                    if (curentCinema == null){
+                    selectedCinema = chooseCinema(cinemas, scanner);
+                    if (selectedCinema == null){
                         break;
                     }
-                    FileManager.createHall(curentCinema, scanner);
+                    FileManager.createHall(selectedCinema, scanner);
                     break;
 
                 case 3: //  Добавить схему зала
-                    curentCinema = chooseCinema(cinemas, scanner);
-                    curentHall = chooseHall(curentCinema, scanner);
-                    FileManager.addSeats(curentCinema, curentHall, scanner);
+                    selectedCinema = chooseCinema(cinemas, scanner);
+                    selectedHall = chooseHall(selectedCinema, scanner);
+                    FileManager.addSeats(selectedCinema, selectedHall, scanner);
                     break;
 
                 case 4: // Добавить сеанс
-                    System.out.println("Добавление сеанса временно не поддерживается ((");                    
+                    // Получаем зал
+                    selectedCinema = chooseCinema(cinemas, scanner);
+                    selectedHall = chooseHall(selectedCinema, scanner);
+
+                    // Получаем фильм 
+                    Movie selectedMovie = chooseMovie(movies, scanner);
+
+                    // Получаем время начала сеанса
+                    System.out.print("Введите дату (в формате YYYY-MM-DD): ");
+                    String date = scanner.nextLine();
+
+                    // Получаем время начала сеанса
+                    System.out.print("Введите время начала сеанса (в формате HH:mm): ");
+                    String startTimeStr = scanner.nextLine();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
+                    LocalTime startTime = LocalTime.parse(startTimeStr, formatter);
+
+                    // Рассчитываем время окончания
+                    String movieLength = selectedMovie.getLength(); 
+                    LocalTime endTime = startTime.plusMinutes(Integer.parseInt(movieLength));
+
+                    // Получаем сеанс
+                    Session newSession = new Session(selectedCinema, selectedHall, date, selectedMovie.getMovieTitle(), startTime, endTime);
+
+                    // Добавляем сеанс
+                    int insertPosition = FileManager.findSessionInsertPosition(selectedCinema, newSession);
+                    
+                    FileManager.createSession(newSession, selectedCinema.getName(), selectedHall, date, selectedMovie.getMovieTitle(), startTime, endTime, insertPosition);
+
+                    System.out.println("Сеанс добавлен! \nФильм: " + selectedMovie.getMovieTitle() + "\nЗал: " + selectedHall.getName() + "\nДата: " + date + "\nВремя: " + startTime + " - " + endTime);
+                    System.out.println();
                     break;
 
                 case 5: //  Меню фильмов
@@ -77,16 +109,40 @@ public class bookingSystem {
                     if (selectedSession == null) {
                         break;
                     }
-                    selectedSession.showSeats();
-                    chooseSeat(selectedSession, scanner);
+                    if (selectedSession.hasAvailableSeats()) {
+                        selectedSession.showSeats();
+                        List<Integer> seat = chooseSeat(selectedSession, scanner);
+                        if (seat == null) {
+                            break;
+                        }
+                        System.out.println(selectedSession.generateTicket(seat));
+                        // Демонстрация брони
+                        System.out.println();
+                        selectedSession.showSeats();
+
+                    } else {
+                        System.out.println("На этом сеансе нет свободных мест :(");
+                    }
                     break;
 
                 case 2: // Выбрать сеанс по дате
                     TreeSet<String> dates = findSessionDates(cinemas);
                     String selectedDate = chooseDate(dates, scanner);
                     selectedSession = chooseSessionByDate(cinemas, selectedDate, scanner);
-                    selectedSession.showSeats();
-                    chooseSeat(selectedSession, scanner);
+                    if (selectedSession.hasAvailableSeats()) {
+                        selectedSession.showSeats();
+                        List<Integer> seat = chooseSeat(selectedSession, scanner);
+                        if (seat == null) {
+                            break;
+                        }
+                        System.out.println(selectedSession.generateTicket(seat));
+                        // Демонстрация брони
+                        System.out.println();
+                        selectedSession.showSeats();
+
+                    } else {
+                        System.out.println("На этом сеансе нет свободных мест :(");
+                    }
                     break;
 
                 case 0: // Выход
@@ -133,16 +189,19 @@ public class bookingSystem {
     }
 
     // Выбор места
-    public static void chooseSeat(Session currentSession, Scanner scanner) {
+    public static List<Integer> chooseSeat(Session currentSession, Scanner scanner) {
         System.out.print("Введите ряд и место для бронирования: ");
         int row = scanner.nextInt() - 1;
         int col = scanner.nextInt() - 1;
 
         if (currentSession.bookSeat(row, col)) {
-            System.out.println("Место забронировано!");
-            currentSession.showSeats();
+            List<Integer> seat = new ArrayList<>();
+            seat.add(row);
+            seat.add(col);
+            return seat;
         } else {
             System.out.println("Ошибка: место уже занято или некорректный ввод.");
+            return null;
         }      
     }
 
@@ -184,7 +243,6 @@ public class bookingSystem {
             System.out.println("Ошибка: Неверный номер фильма!");
             return null;
         }
-        System.out.println("Выбран фильм: " + selectedSessions.get(inputIndex).getMovieTitle());
         return selectedSessions.get(inputIndex);
     }
 
@@ -208,8 +266,6 @@ public class bookingSystem {
         System.out.print("Выберите номер сеанса: ");
         int movieIndex = scanner.nextInt();
         Session selectedSession = sessionsOnDate.get(movieIndex);
-
-        System.out.println("Выбран сеанс на фильм " + selectedSession.getMovieTitle());
         return selectedSession;
     }
 
@@ -382,8 +438,14 @@ public class bookingSystem {
 
         System.out.println("Загружаем фильмы...");
         List<Movie> movies = FileManager.loadMovies(); // загружаем фильмы из файла
- 
-        User(cinemas, movies, scanner);
-        // Admin(cinemas, movies, scanner);
+
+        String userRole = AuthManager.login();
+        if (userRole.equals("admin")) {
+            System.out.println("Режим администратора!");
+            Admin(cinemas, movies, scanner);
+        } else {
+            System.out.println("Привет, " + userRole + "!");
+            User(cinemas, movies, scanner);
+        }
     }
 }

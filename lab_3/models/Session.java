@@ -1,21 +1,24 @@
 package models;
 
 import java.time.LocalTime;
+import java.util.List;
 
 public class Session {
+    private Cinema cinema;
+    private Hall hall;
+    private Seat[][] seats;
+    private String date;
     private String movieTitle;
     private LocalTime startTime;
-    private LocalTime endTime;
-    private Hall hall;
-    private String date; 
-    private Seat[][] seats; 
+    private LocalTime endTime;  
 
-    public Session(String movieTitle, LocalTime startTime, LocalTime endTime, Hall hall, String date) {
+    public Session(Cinema cinema, Hall hall, String date, String movieTitle, LocalTime startTime, LocalTime endTime) {
+        this.cinema = cinema;
+        this.hall = hall;
+        this.date = date;
         this.movieTitle = movieTitle;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.hall = hall;
-        this.date = date;
         this.seats = copySeatsFromHall(hall);
     }
 
@@ -53,6 +56,18 @@ public class Session {
         }
     }
 
+    // Проверка на свободные места
+    public boolean hasAvailableSeats() {
+        for (Seat[] row : seats) {
+            for (Seat seat : row) {
+                if (!seat.getState().contains("X")) {
+                    return true;  // Найдено хотя бы одно свободное место
+                }
+            }
+        }
+        return false;  // Все места забронированы
+    }
+
     public String getMovieTitle() {
         return movieTitle;
     }
@@ -71,6 +86,17 @@ public class Session {
 
     public Hall getHall() {
         return hall;
+    }
+
+    public String generateTicket(List<Integer> seat) {
+        return "Фильм: " + movieTitle + "\n" +
+               "Кинотеатр: " + cinema.getName() + "\n" +
+               "Зал: " + hall.getName() + "\n" +
+               "Ряд: " + (seat.get(0) + 1) + "\n" +
+               "Место: " + (seat.get(1) + 1) + "\n" +
+               "Дата: " + date + "\n" +
+               "Время начала: " + startTime + "\n" +
+               "Время окончания: " + endTime;
     }
 
     @Override

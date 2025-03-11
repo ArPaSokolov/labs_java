@@ -1,6 +1,7 @@
 package models;
 
 import java.io.*;
+import java.nio.file.*;
 import java.time.LocalTime;
 import java.util.*;
 
@@ -88,6 +89,22 @@ public class FileManager {
         // Вставка фильма в конец списка
         File moviesFile = new File(MOVIES_FILE);
         insertLine2File(moviesFile, title + ";" + length, Integer.MAX_VALUE);
+    }
+
+    // Добавление нового сеанса
+    public static void createSession(Session newSession, String selectedCinemaName, Hall selectedHall, String date, String selectedMovieName, LocalTime startTime, LocalTime endTime, int insertPosition) {
+        String insertString = null;
+
+        if (insertPosition == Integer.MAX_VALUE) {
+            insertString = "\n" + date + "\nЗал " + selectedHall.getName() + "\n" + selectedMovieName + "|" + startTime + "|" + endTime;
+        } else {
+            insertString = selectedMovieName + "|" + startTime + "|" + endTime;
+        }
+
+        // Добавление
+        selectedHall.addSession(newSession);
+        File sessionsFile = new File(SESSIONS_PATH + selectedCinemaName + ".txt");
+        insertLine2File(sessionsFile, insertString, insertPosition);
     }
 
     // Обновление списка фильмов (перезаписываем файл)
@@ -241,7 +258,7 @@ public class FileManager {
             System.out.println("Зал \"" + hallName + "\" уже существует!");
         } else {
             File cinemasFile = new File(CINEMAS_FILE);
-            insertLine2File(cinemasFile, hallName, findCinemaLineNumber(cinema) + 1);
+            insertLine2File(cinemasFile, hallName, findCinemaLineNumber(cinema));
             cinema.addHall(hall);
 
             System.out.println("Зал \"" + hallName + "\" успешно добавлен!");
@@ -338,7 +355,7 @@ public class FileManager {
                     LocalTime startTime = LocalTime.parse(parts[1]);
                     LocalTime endTime = LocalTime.parse(parts[2]);
 
-                    Session session = new Session(movieTitle, startTime, endTime, currentHall, date);
+                    Session session = new Session(cinema, currentHall, date, movieTitle, startTime, endTime);
                     currentHall.addSession(session);
                 }
             }
@@ -347,4 +364,47 @@ public class FileManager {
         }
     }
 
+    // Метод для нахождения позиции строки, куда нужно записать новый сеанс
+    public static int findSessionInsertPosition(Cinema cinema, Session session) {
+        String fileName = SESSIONS_PATH + cinema.getName() + ".txt";
+        List<String> lines = new ArrayList<>();
+        
+        try {
+            lines = Files.readAllLines(Paths.get(fileName));
+        } catch (IOException e) {
+            System.out.println("Ошибка при чтении файла сеансов: " + e.getMessage());
+            return -1;
+        }
+
+        String newDate = session.getDate();
+        String newHallName = session.getHall().getName();
+
+        // Перебираем строки файла и ищем место для вставки
+        boolean dateFound = false;
+        boolean hallFound = false;
+
+        int insertPosition = Integer.MAX_VALUE;  // по умолчанию вставляем в конец
+
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i).trim();
+
+            // Находим дату
+            if (line.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                if (line.equals(newDate)) {
+                    dateFound = true;  // Дата найдена
+                    System.out.println("Нашел дату");
+                } else if (dateFound) {
+                    return i - 1;
+                }
+            }
+
+            // Находим зал
+            if (dateFound && line.contains("Зал " + newHallName)) {
+                insertPosition = i + 1;
+                System.out.println("Нашел зал");
+                return insertPosition;  // Зал найден
+            }
+        }
+        return insertPosition;
+    }
 }
