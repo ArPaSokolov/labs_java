@@ -65,7 +65,7 @@ public class FileManager {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(";");
                 if (parts.length == 2) {
-                    movies.add(new Movie(parts[0], parts[1]));  // Создаём объект Movie
+                    movies.add(new Movie(parts[0], parts[1]));
                 }
             }
             System.out.println("Фильмы загружены из файла!");
@@ -309,42 +309,6 @@ public class FileManager {
         }
     }
 
-    // Загрузка фильмов из списка по дате (один фильм записывается один раз)
-    public static HashSet<String> findMoviesByDate(String cinemaName, String date) {
-        File file = new File(SESSIONS_PATH + cinemaName + ".txt");
-        if (!file.exists()){
-            System.out.println("Такого кинотеатра нет :(");
-            return null;
-        } 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            boolean dateMatches = false;
-            HashSet<String> movie = new HashSet<>();
-
-            while ((line = reader.readLine()) != null) {
-                if (line.equals(date)) { // нашли нужную дату, считываем записи до следующей даты
-                    dateMatches = true;
-                }
-                else if (line.matches("\\d{4}-\\d{2}-\\d{2}") && dateMatches) { // считали следующую дату
-                        return movie;
-                }
-                else if (!line.isBlank() && !line.contains("Зал")) { // не дата, не пустая строка и не зал => это фильм
-                        String[] parts = line.split(" ");
-                        movie.add(parts[0]);
-                }
-            }
-            if (!dateMatches){
-                System.out.println("В эту дату в кинотетре " + cinemaName + " сеансов нет :(");
-                return null;
-            } else {
-                return movie;
-            }
-        } catch (IOException e) {
-            System.out.println("Ошибка загрузки кинотеатра: " + e.getMessage());
-            return null;
-        }
-    }
-
     // Чтение сеансов
     public static void loadSessions(Cinema cinema) {
         String fileName = SESSIONS_PATH + cinema.getName() + ".txt";
@@ -382,4 +346,5 @@ public class FileManager {
             System.out.println("Ошибка при загрузке сеансов: " + e.getMessage());
         }
     }
+
 }

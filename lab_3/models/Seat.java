@@ -20,7 +20,7 @@ public class Seat {
     }
 
     // Если место свободно, возвращается номер, иначе крестик
-    public String seatState() {
+    public String getState() {
         return isTaken ? "X" : number;
     }
 }
