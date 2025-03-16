@@ -270,9 +270,9 @@ public class bookingSystem {
         // Выбор сеанса из подходящих
         System.out.println("Выберите номер сеанса: ");
         for (int i = 0; i < sessionsOnDate.size(); i++) {
-            System.out.println(i + ". " + sessionsOnDate.get(i).getMovieTitle() + " " + sessionsOnDate.get(i).getStartTime() + "-"+ sessionsOnDate.get(i).getEndTime() + " (" + sessionsOnDate.get(i).getCinema().getName() + ", Зал " + sessionsOnDate.get(i).getHall().getName()+ ")");
+            System.out.println((i + 1) + ". " + sessionsOnDate.get(i).getMovieTitle() + " " + sessionsOnDate.get(i).getStartTime() + "-"+ sessionsOnDate.get(i).getEndTime() + " (" + sessionsOnDate.get(i).getCinema().getName() + ", Зал " + sessionsOnDate.get(i).getHall().getName()+ ")");
         }
-        int movieIndex = scanner.nextInt();
+        int movieIndex = scanner.nextInt() - 1;
         Session selectedSession = sessionsOnDate.get(movieIndex);
         return selectedSession;
     }
