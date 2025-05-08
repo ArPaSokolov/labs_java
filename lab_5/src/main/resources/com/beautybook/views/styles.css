@@ -1,0 +1,11 @@
+.table-view {
+    -fx-base: #f0f0f0;
+    -fx-control-inner-background: #ffffff;
+    -fx-table-cell-border-color: transparent;
+}
+
+.button {
+    -fx-background-color: #4a90e2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
